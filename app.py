@@ -1,18 +1,11 @@
 import streamlit as st
 import cv2
-import yt_dlp
+import pafy
 import numpy as np
 from ultralytics import YOLO
 
 # Загрузка модели YOLOv8
 model = YOLO("yolov8n.pt")
-
-# Функция загрузки YouTube-видео
-def get_youtube_stream_url(video_url):
-    ydl_opts = {'format': 'best'}
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(video_url, download=False)
-        return info_dict.get("url", None)
 
 # Функция обработки кадра с YOLOv8
 def process_frame(img):
@@ -27,11 +20,13 @@ st.title("YOLOv8 YouTube Object Detection")
 youtube_url = st.text_input("Введите ссылку на YouTube-видео:")
 if st.button("Запустить"):
     if youtube_url:
-        stream_url = get_youtube_stream_url(youtube_url)
-        if stream_url:
-            st.session_state["video_url"] = stream_url
-        else:
-            st.error("Не удалось получить поток")
+        try:
+            # Получаем видео с помощью Pafy
+            video = pafy.new(youtube_url)
+            best = video.getbest(preftype="mp4")
+            st.session_state["video_url"] = best.url
+        except Exception as e:
+            st.error(f"Ошибка при загрузке видео: {e}")
     else:
         st.error("Введите ссылку на YouTube")
 
